@@ -1,0 +1,23 @@
+{
+  "name": "statsfm-skill",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "statsfm": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "bundle": "npx tsx esbuild.config.ts",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@statsfm/statsfm.js": "^2.3.3",
+    "commander": "^13.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "esbuild": "^0.28.0",
+    "typescript": "^5.8.0"
+  }
+}
