@@ -21,7 +21,7 @@ This is your primary tool. Write JS to fetch, compute, and combine data. The CLI
 
 ## How to Think About the Data
 
-**Share is the answer, not the count.** 500 plays means nothing. 500 out of 600 total? Obsession. 500 out of 5,000? Background noise. Always pair any query with `api.users.stats()` for the same period and compute entity plays / total streams.
+**Share is the answer, not the count.** 500 plays means nothing. 500 out of 600 total? Obsession. 500 out of 5,000? Background noise. Always pair any query with `api.users.stats()` for the same period and compute entity plays / total streams. If current, check `PLATFORM` ordering for engagement depth beyond counts.
 
 **Profile the listener first.** Run `node js/cli.cjs overview -u USERNAME` before answering anything. The `Profile:` line gives you replay rate, concentration (top 5/20 share), and #1 share. These set the scale — 5% share is obsession for an explorer, background noise for a loyalist. Calibrate every number against the listener's profile.
 
@@ -33,11 +33,15 @@ This is your primary tool. Write JS to fetch, compute, and combine data. The CLI
 
 **Cardinality is breadth, not depth.** Unique albums = albums with at least one track played, not albums listened to deeply. Unique artists can be misleading — a user with 700 unique artists where 94% of streams go to 20 of them has a functional artist count of 20. Use `topTracksFromAlbums` to tell album listeners from cherry-pickers.
 
-**`PLATFORM` vs `COUNT` order is a core analytical signal.** `COUNT` measures volume. `PLATFORM` (Spotify's algorithm) measures engagement quality — it's downstream of skip rate, seek behavior, saves, loop behavior, play counts, session position, and dozens of other signals. It's a composite model output, not decomposable into named axes. When a track over-indexes on `PLATFORM` vs `COUNT`, there's engagement depth that play count can't see. The divergence magnitude is the insight — don't try to explain why it diverges. Exception: if the user tells you what they did ("I looped it," "I read the lyrics"), that's first-party evidence — use it. `PLATFORM` returns no play counts (`streams: null`) but has movement indicators (`NEW`/`UP`/`SAME`/`DOWN`). For free users, it's the only ranking available.
+**`PLATFORM` ordering — what the user is actually obsessed with.**
+
+`COUNT` tallies plays. `PLATFORM` captures obsession. It's Spotify's composite model — downstream of skip rate, seek behavior, saves, loops, session position, and dozens of signals play count is blind to. Not decomposable; don't try. When `PLATFORM` and `COUNT` disagree, the divergence itself is the finding. If the user tells you what they did with a track, that's first-party evidence — it overrides the metric.
+
+`PLATFORM` returns no play counts (`streams: null`) but adds movement indicators (`NEW`/`UP`/`SAME`/`DOWN`) and — critically — position. Compare positions between `PLATFORM` and `COUNT`: a track at #3 on PLATFORM but #12 on COUNT has engagement depth the play count misses. The reverse matters too — #2 on COUNT but #5 on PLATFORM means the count is coasting on accumulated plays but active engagement is fading. The position gap in both directions is the signal, not just the indicator. Only takes predefined ranges (`weeks`, `months`, `lifetime`) — no custom dates, no historical rankings. For free users, it's the only ranking available.
 
 **Lead with data when it contradicts the user.** State what the data shows first, then address the discrepancy. The user came for truth, not validation.
 
-**Don't be lazy. Always check multiple ranges.** Never answer from a single range. Pull recent (4w or 7d) AND lifetime AND the relevant custom period. Lifetime alone is accumulation — it buries what's happening now. Recent alone has no context. Even when it seems like one range is enough, it isn't. The full picture requires at least two ranges every time, no exceptions.
+**Don't be lazy. Always check multiple ranges.** Never answer from a single range. Pull recent (4w or 7d) AND lifetime AND the relevant custom period. Lifetime alone is accumulation — it buries what's happening now. Recent alone has no context. Even when it seems like one range is enough, it isn't. The full picture requires at least two ranges every time, no exceptions. If current, add a `PLATFORM` check — it shows what's active in a way counts can't.
 
 ---
 
@@ -50,6 +54,7 @@ These produce confident, plausible, wrong output:
 - Calling a raw count drop a "decline" without checking if total volume also dropped → false attribution
 - Treating cardinality as depth ("700 unique artists = broad listener") without checking concentration → wrong profile
 - Using `PLATFORM` ranking to compute shares (it has no play counts) → type error
+- Only using `COUNT` for current engagement questions without checking `PLATFORM` → missing the obsession signal that counts can't capture
 
 ---
 
