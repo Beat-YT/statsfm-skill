@@ -173,6 +173,62 @@ api.users.trackStreams(userId, trackId, { limit?, order? })
 api.users.albumStreams(userId, albumId, { limit?, order? })
 ```
 
+Pair `limit: 1` with `order: 'asc'` / `'desc'` to get the first and last time a user played an entity.
+
+---
+
+## api.users.artistStats / trackStats / albumStats
+
+Total plays + listening time for a single entity (no cardinality, no rank). Same signature for tracks and albums.
+
+```javascript
+await api.users.artistStats('username', 22369, { range: 'lifetime' })
+```
+```json
+{ "count": 21114, "durationMs": 3732360164 }
+```
+
+There is no rank field. To find an entity's rank among a user's artists, fetch `topArtists` (caps at ~500) and match `position`:
+
+```javascript
+const all = await api.users.topArtists('username', { range: 'lifetime', limit: 500 });
+const rank = all.find(a => a.artist.id === 22369)?.position; // undefined ⇒ outside top 500
+```
+
+---
+
+## api.users.artistDateStats / trackDateStats / albumDateStats
+
+Listening aggregated by clock-hour, weekday, month-day, month, and year for one entity. `hours` (keys `0`–`23`) builds a listening clock.
+
+```javascript
+const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+await api.users.artistDateStats('username', 22369, tz, { range: 'lifetime' })
+```
+```json
+{
+  "hours":    { "0": { "count": 1203, "durationMs": 213117744 }, "17": { "count": 1463, "durationMs": 254997499 } },
+  "weekDays": { "0": { "count": 0, "durationMs": 0 } },
+  "months":   { "1": { "count": 908, "durationMs": 153474947 } },
+  "years":    { "2024": { "count": 0, "durationMs": 0 } }
+}
+```
+
+---
+
+## api.artists.tracks / topTracks / topAlbums / related / topListeners
+
+Global, account-free artist context. `related` can be `[]`. `topListeners` needs an authenticated token — it returns **403 Forbidden** here, so guard it with `.catch(() => [])`.
+
+```javascript
+await api.artists.tracks(22369)              // → Track[]
+await api.artists.topTracks(22369)           // → Track[] (most popular)
+await api.artists.topAlbums(22369)           // → Album[]
+await api.artists.related(22369)             // → Artist[] (may be empty)
+await api.artists.topListeners(22369)        // → TopUser[]  (403 without auth)
+await api.artists.topListeners(22369, true)  // friends only (403 without auth)
+```
+
 ---
 
 ## api.users.currentlyStreaming(userId)
@@ -267,6 +323,8 @@ await api.artists.albums(22369)
 }]
 ```
 
+Paginated (~50, mostly `type: 'single'`) — not the full catalog. For a user's most-played albums by an artist, use `api.users.topAlbumsFromArtist`.
+
 ---
 
 ## api.albums.get(id) / api.albums.tracks(id)
@@ -287,6 +345,8 @@ await api.albums.tracks(56735245)
 }]
 ```
 
+Also: `api.albums.topListeners(id[, friendsOnly])` (→ `TopUser[]`, **403 without auth** — guard it).
+
 ---
 
 ## api.tracks.get(id)
@@ -305,6 +365,8 @@ await api.tracks.get(188745898)
   "externalIds": { "spotify": ["..."], "appleMusic": ["..."] }
 }
 ```
+
+Also: `api.tracks.topListeners(id[, friendsOnly])` (→ `TopUser[]`, **403 without auth** — guard it) and `api.tracks.audioFeature(spotifyId)` / `audioFeatures(spotifyIds[])` for tempo/energy/danceability.
 
 ---
 

@@ -148,7 +148,7 @@ Same signature for `trackPerDayStats(userId, trackId, tz, range?)` and `albumPer
 
 ### api.users.artistStreams / trackStreams / albumStreams
 
-Raw stream records. `order: 'asc'` for first plays, `'desc'` for most recent.
+Raw stream records. `order: 'asc'` for first plays, `'desc'` for most recent. Pair `limit: 1` with `order: 'asc'`/`'desc'` to get the first and last time the user played an entity.
 
 ```js
 await api.users.artistStreams('username', 22369, { limit: 5, order: 'asc' })
@@ -158,6 +158,39 @@ await api.users.artistStreams('username', 22369, { limit: 5, order: 'asc' })
   "endTime": "2024-09-01T14:41:00.000Z", "playedMs": 175459,
   "trackId": 188745898, "trackName": "Espresso", "albumId": 25631099, "artistIds": [22369]
 }]
+```
+
+### api.users.artistStats / trackStats / albumStats
+
+Total plays + listening time for one entity. Your numerator for "what share of this user is X". Same signature for tracks and albums.
+
+```js
+await api.users.artistStats('username', 22369, { range: 'lifetime' })
+// → { count: 21114, durationMs: 3732360164 }   (no cardinality, no rank)
+```
+
+To get an artist's **rank** among the user's artists, fetch `topArtists` (caps at ~500) and find the matching `position`:
+
+```js
+const all = await api.users.topArtists('username', { range: 'lifetime', limit: 500 });
+const rank = all.find(a => a.artist.id === 22369)?.position; // undefined ⇒ outside top 500
+```
+
+### api.users.artistDateStats / trackDateStats / albumDateStats
+
+Listening aggregated by clock-hour, weekday, month-day, month, and year — for one entity. Use `hours` (keys `0`–`23`) to build a listening clock.
+
+```js
+const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+await api.users.artistDateStats('username', 22369, tz, { range: 'lifetime' })
+```
+```json
+{
+  "hours":   { "0": { "count": 1203, "durationMs": 213117744 }, "17": { "count": 1463, "durationMs": 254997499 } },
+  "weekDays":{ "0": { "count": 0, "durationMs": 0 } },
+  "months":  { "1": { "count": 908, "durationMs": 153474947 } },
+  "years":   { "2024": { "count": 0, "durationMs": 0 } }
+}
 ```
 
 ### api.users.currentlyStreaming(userId)
@@ -259,6 +292,21 @@ await api.artists.albums(22369)
 }]
 ```
 
+`api.artists.albums(id)` is paginated (~50 results, mostly `type: 'single'`); it does NOT return the artist's full catalog. For a user's actual most-played albums by an artist, use `api.users.topAlbumsFromArtist` instead.
+
+### api.artists.tracks / topTracks / topAlbums / related / topListeners
+
+Global, account-free artist context (no user needed). `related` can return `[]`. `topListeners` requires an authenticated token — it returns **403 Forbidden** here, so wrap it in `.catch(() => [])`.
+
+```js
+await api.artists.tracks(22369)        // → Track[] (the artist's tracks)
+await api.artists.topTracks(22369)     // → Track[] (the artist's most popular tracks)
+await api.artists.topAlbums(22369)     // → Album[]
+await api.artists.related(22369)       // → Artist[] (similar artists; may be empty)
+await api.artists.topListeners(22369)            // → TopUser[]  (403 without auth)
+await api.artists.topListeners(22369, true)      // friends only  (403 without auth)
+```
+
 ### api.albums.get(id) / api.albums.tracks(id)
 
 ```js
@@ -277,6 +325,8 @@ await api.albums.tracks(56735245)
 }]
 ```
 
+Also: `api.albums.topListeners(id[, friendsOnly])` (→ `TopUser[]`, **403 without auth** — guard it).
+
 ### api.tracks.get(id)
 
 ```js
@@ -293,6 +343,8 @@ await api.tracks.get(188745898)
   "externalIds": { "spotify": ["..."], "appleMusic": ["..."] }
 }
 ```
+
+Also: `api.tracks.topListeners(id[, friendsOnly])` (→ `TopUser[]`, **403 without auth** — guard it) and `api.tracks.audioFeature(spotifyId)` / `audioFeatures(spotifyIds[])` for tempo/energy/danceability.
 
 ### api.charts.topTracks / topArtists / topAlbums
 
@@ -353,6 +405,12 @@ Search returns duplicates. Prefer results with genre tags for artists. When ambi
 **History:** `artist-history <id>`, `track-history <id>`, `album-history <id>`, `listening-history` — flags: `--start/--end`, `--granularity monthly|weekly|daily|yearly`. Does NOT support `--range`.
 
 **Lookups:** `search <query>` (`-t artist|track|album`), `artist <id>`, `track <id>`, `album <id>`
+
+**Artist page:** `artist <id> -u USERNAME` — full personal artist page in one call: lifetime totals (streams/min/hours/days), avg per day, rank among your artists (all-time / 6mo / 4wk), presence (top-250 tracks 4w, last-50 streams), first & last stream, a by-hour listening clock, and your top tracks & albums by that artist. Flags: `-r/--range` (default `all`), `--start/--end`, `--born YYYY-MM-DD` (adds % of your life listened), `-l/--limit`. Without `-u` it shows discography + related artists.
+
+**Track page:** `track <id> -u USERNAME` — full personal track page: lifetime totals (streams/min/hours), avg per day, rank among your tracks (all-time / 6mo / 4wk), presence in your last-50 streams, first & last stream, and a by-hour listening clock. Flags: `-r/--range` (default `all`), `--start/--end`. Without `-u` it shows track info only.
+
+**Album page:** `album <id> -u USERNAME` — full personal album page: lifetime totals (streams/min/hours/days), avg per day, how many of the album's tracks land in your top tracks (all-time / 6mo / 4wk), first & last stream (with which track), and a by-hour listening clock. Flags: `-r/--range` (default `all`), `--start/--end`. Without `-u` it shows the tracklist.
 
 **Drill-Downs:** `top tracks --from-artist ID`, `top tracks --from-album ID`, `top albums --from-artist ID`
 

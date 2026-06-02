@@ -40,6 +40,21 @@ export function printTable(rows: string[][], maxWidth = 40): void {
   }
 }
 
+const SPARK_CHARS = ['▁', '▂', '▃', '▄', '▅', '▆', '▇', '█'];
+
+export function sparkline(values: number[]): string {
+  if (!values.length) return '';
+  const max = Math.max(...values);
+  if (max <= 0) return ' '.repeat(values.length);
+  return values
+    .map(v => {
+      if (v <= 0) return ' ';
+      const idx = Math.min(SPARK_CHARS.length - 1, Math.round((v / max) * (SPARK_CHARS.length - 1)));
+      return SPARK_CHARS[idx];
+    })
+    .join('');
+}
+
 export function parseDate(dateStr: string): number {
   const parts = dateStr.split('-').map(Number);
   if (parts.length === 1) return Date.UTC(parts[0], 0, 1);
