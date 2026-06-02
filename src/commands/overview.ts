@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import { getApi } from '../utils/api.js';
-import { buildDateOptions } from '../utils/format.js';
+import { buildDateOptions, describeRange } from '../utils/format.js';
 
 function compact(n: number): string {
   if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
@@ -45,6 +45,7 @@ export function registerOverview(program: Command): void {
       const pronouns = profile.profile?.pronouns ? ` (${profile.profile.pronouns})` : '';
       const tz = profile.timezone ?? '?';
       console.log(`${profile.displayName}${pronouns} [${tier}] tz=${tz}`);
+      console.log(`Range: ${describeRange(dateOpts)}`);
 
       // Now playing
       if (np) {

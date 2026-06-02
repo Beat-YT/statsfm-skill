@@ -88,6 +88,17 @@ export function buildDateOptions(opts: {
   return { range: mapped as Range };
 }
 
+export function describeRange(dateOpts: QueryWithRange | QueryWithDates): string {
+  if ('range' in dateOpts && dateOpts.range) {
+    return dateOpts.range;
+  }
+  const dates = dateOpts as QueryWithDates;
+  const fmt = (ms: number) => new Date(ms).toISOString().slice(0, 10);
+  const after = dates.after !== undefined ? fmt(dates.after) : '?';
+  const before = dates.before !== undefined ? fmt(dates.before) : 'now';
+  return `${after} → ${before}`;
+}
+
 export function groupByMonth(days: Record<string, { count: number; durationMs: number }>): Map<string, { count: number; durationMs: number }> {
   const monthly = new Map<string, { count: number; durationMs: number }>();
   for (const [dateStr, stats] of Object.entries(days)) {
