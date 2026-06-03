@@ -4,7 +4,7 @@ Guidance for Claude Code when working in this repository.
 
 ## What this is
 
-This repo is a **Claude Code skill**: `statsfm`. It queries Spotify and Apple
+This repo is a skill: `statsfm`. It queries Spotify and Apple
 Music listening data through the [stats.fm](https://stats.fm) API. It ships two
 things:
 
@@ -71,9 +71,6 @@ implied by making a change.
   do not push. If they want both, they'll say both (or say push).
 - Default branch is `master`. Develop on the branch you're told to use; never
   push to a different branch without explicit permission.
-- When you do push: `git push -u origin <branch>`, retry on network errors only
-  (exponential backoff 2s/4s/8s/16s).
-- Do **not** open a pull request unless the user explicitly asks for one.
 
 ## Style
 
