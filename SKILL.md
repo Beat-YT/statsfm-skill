@@ -378,15 +378,6 @@ await api.charts.topArtists({ range: 'today' })
 await api.charts.topAlbums({ range: 'today' })
 ```
 
-### api.search.searchElastic(query, types, opts)
-
-Always prefer the CLI for search — results contain duplicates and need manual evaluation.
-
-```js
-await api.search.searchElastic('Sabrina Carpenter', ['artist'], { limit: 5 })
-// → { artists?, tracks?, albums? }
-```
-
 ---
 
 ## Setup
