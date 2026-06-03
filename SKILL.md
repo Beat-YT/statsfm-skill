@@ -402,6 +402,7 @@ Search returns duplicates. Prefer results with genre tags for artists. When ambi
 - **Empty results?** Retry with `{ range: 'lifetime' }`. If still empty, profile might be private.
 - **Free (non-Plus) users:** No play counts. Use `orderBy: 'PLATFORM'` — movement indicators are the best available data.
 - **Long-tail artists are often noise, not taste.** Artists with few streams frequently appear only because they're *featured* on a track the user actually played for the main artist — the feature credit gets logged against them. Treat low-count artists in the tail with skepticism: they may not reflect genuine listening of that artist at all. Before calling someone a "listener" of a low-stream artist, sanity-check whether those streams come from collaborations/features rather than the artist's own tracks (e.g. cross-reference the tracks driving the count, or the artist's discography).
+- **Album stream counts aren't album listens.** An album's stream count is the sum of streams across its tracks — it does *not* mean the user listened to the album as a whole. 50 album streams could be one track played 50 times, or spread evenly across the tracklist. Before claiming someone "listens to the album," break the count down by track (e.g. album tracklist + per-track history) to see whether it's concentrated on a single hit or genuinely distributed.
 - **Rate limiting:** Don't hold back. Deep dives take as many calls as they take.
 
 ---
