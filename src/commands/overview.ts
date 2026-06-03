@@ -36,7 +36,7 @@ export function registerOverview(program: Command): void {
         withTimeout(api.users.topGenres(user, dateOpts), 'genres'),
         withTimeout(api.users.topArtists(user, dateOpts), 'artists'),
         withTimeout(api.users.topTracks(user, dateOpts), 'tracks'),
-        withTimeout(api.users.topAlbums(user, dateOpts), 'albums'),
+        withTimeout(api.users.topAlbums(user, dateOpts), 'albums').catch(() => null),
         withTimeout(api.users.recentlyStreamed(user), 'recent').catch(() => null),
       ]);
 
@@ -60,7 +60,8 @@ export function registerOverview(program: Command): void {
       const ms = stats.durationMs ?? 0;
       const card = stats.cardinality;
       const mins = Math.floor(ms / 60000);
-      console.log(`Streams: ${count} / ${mins}min / ${card?.tracks ?? 0} unique tracks / ${card?.artists ?? 0} unique artists / ${card?.albums ?? 0} unique albums`);
+      console.log(`Streams: ${count} plays / ${mins}mins`);
+      console.log(`Cardinality: [${card?.tracks ?? 0} unique tracks] / [${card?.artists ?? 0} unique artists] / [${card?.albums ?? 0} unique albums]`);
 
       if (count > 0 && card && artists?.length) {
         const replayRate = (count / card.tracks).toFixed(1);
